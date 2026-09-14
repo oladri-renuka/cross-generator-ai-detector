@@ -1,7 +1,6 @@
 # PyTorch & Vision (GPU optimized)
-torch>=2.12.0
-torchvision>=0.17.0
-torchaudio>=2.12.0
+torch>=2.0.0
+torchvision>=0.15.0
 
 # Model & Inference
 timm>=0.9.7
@@ -30,4 +29,3 @@ tqdm>=4.66.0
 
 # Optional: For faster inference on RunPod
 xformers>=0.0.20  # GPU memory optimization
-tensorrt>=8.6.0   # Optional: TensorRT optimization
