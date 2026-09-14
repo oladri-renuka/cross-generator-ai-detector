@@ -11,7 +11,7 @@ from typing import Tuple, Dict, List
 import torch
 import torch.nn.functional as F
 from torchvision import transforms
-from skimage.feature import greycomatrix, greycoprops
+from skimage.feature import graycomatrix, graycoprops
 from timm import create_model
 from tqdm import tqdm
 import json
@@ -68,16 +68,16 @@ class GLCMTextureExtractor:
         features = []
 
         for distance in distances:
-            glcm = greycomatrix(gray, distances=[distance], angles=angles, levels=256)
+            glcm = graycomatrix(gray, distances=[distance], angles=angles, levels=256)
 
             for angle_idx in range(glcm.shape[3]):
                 glcm_slice = glcm[:, :, 0, angle_idx]
 
-                contrast = greycoprops(glcm_slice, 'contrast')[0, 0]
-                dissimilarity = greycoprops(glcm_slice, 'dissimilarity')[0, 0]
-                homogeneity = greycoprops(glcm_slice, 'homogeneity')[0, 0]
-                energy = greycoprops(glcm_slice, 'energy')[0, 0]
-                correlation = greycoprops(glcm_slice, 'correlation')[0, 0]
+                contrast = graycoprops(glcm_slice, 'contrast')[0, 0]
+                dissimilarity = graycoprops(glcm_slice, 'dissimilarity')[0, 0]
+                homogeneity = graycoprops(glcm_slice, 'homogeneity')[0, 0]
+                energy = graycoprops(glcm_slice, 'energy')[0, 0]
+                correlation = graycoprops(glcm_slice, 'correlation')[0, 0]
 
                 features.extend([contrast, dissimilarity, homogeneity, energy, correlation])
 
