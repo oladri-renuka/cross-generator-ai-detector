@@ -1,0 +1,109 @@
+{
+  "results": {
+    "ensemble": [
+      {
+        "test_generator": "sdxl",
+        "accuracy": 0.9866666666666667,
+        "auc": NaN,
+        "precision": 1.0,
+        "recall": 0.9866666666666667,
+        "f1": 0.9932885906040269
+      },
+      {
+        "test_generator": "flux",
+        "accuracy": 0.9666666666666667,
+        "auc": NaN,
+        "precision": 1.0,
+        "recall": 0.9666666666666667,
+        "f1": 0.9830508474576272
+      },
+      {
+        "test_generator": "sd15",
+        "accuracy": 0.9,
+        "auc": NaN,
+        "precision": 1.0,
+        "recall": 0.9,
+        "f1": 0.9473684210526315
+      }
+    ],
+    "cnn_only": [
+      {
+        "test_generator": "sdxl",
+        "accuracy": 0.9933333333333333,
+        "auc": NaN,
+        "precision": 1.0,
+        "recall": 0.9933333333333333,
+        "f1": 0.9966555183946488
+      },
+      {
+        "test_generator": "flux",
+        "accuracy": 0.9666666666666667,
+        "auc": NaN,
+        "precision": 1.0,
+        "recall": 0.9666666666666667,
+        "f1": 0.9830508474576272
+      },
+      {
+        "test_generator": "sd15",
+        "accuracy": 0.8866666666666667,
+        "auc": NaN,
+        "precision": 1.0,
+        "recall": 0.8866666666666667,
+        "f1": 0.9399293286219081
+      }
+    ],
+    "frequency_only": [
+      {
+        "test_generator": "sdxl",
+        "accuracy": 0.86,
+        "auc": NaN,
+        "precision": 1.0,
+        "recall": 0.86,
+        "f1": 0.9247311827956989
+      },
+      {
+        "test_generator": "flux",
+        "accuracy": 0.9933333333333333,
+        "auc": NaN,
+        "precision": 1.0,
+        "recall": 0.9933333333333333,
+        "f1": 0.9966555183946488
+      },
+      {
+        "test_generator": "sd15",
+        "accuracy": 0.9933333333333333,
+        "auc": NaN,
+        "precision": 1.0,
+        "recall": 0.9933333333333333,
+        "f1": 0.9966555183946488
+      }
+    ]
+  },
+  "summary": {
+    "ensemble": {
+      "accuracy_mean": 0.9511111111111111,
+      "accuracy_std": 0.03705184889007348,
+      "auc_mean": NaN,
+      "auc_std": NaN,
+      "f1_mean": 0.9745692863714285,
+      "f1_std": 0.0196827869258296
+    },
+    "cnn_only": {
+      "accuracy_mean": 0.9488888888888889,
+      "accuracy_std": 0.045324617898602496,
+      "auc_mean": NaN,
+      "auc_std": NaN,
+      "f1_mean": 0.9732118981580614,
+      "f1_std": 0.02418083047957365
+    },
+    "frequency_only": {
+      "accuracy_mean": 0.9488888888888889,
+      "accuracy_std": 0.06285393610547088,
+      "auc_mean": NaN,
+      "auc_std": NaN,
+      "f1_mean": 0.9726807398616654,
+      "f1_std": 0.03390545695623634
+    }
+  },
+  "timestamp": "2026-09-15T03:54:45.917889"
+}
