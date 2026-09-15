@@ -125,7 +125,7 @@ class FluxSchnellGenerator:
                 guidance_scale=3.5,
                 num_inference_steps=4,
                 max_sequence_length=512
-            ).image
+            ).images[0]
 
             metadata = {
                 "generator": "flux_schnell",
@@ -517,12 +517,13 @@ class SD15Generator:
 
 def main():
     """Main data collection pipeline."""
+    from config import IMAGES_PER_GENERATOR
 
     # Setup
     raw_data_dir = "data/raw"
     os.makedirs(raw_data_dir, exist_ok=True)
 
-    prompts = PromptGenerator.generate_prompts(500)
+    prompts = PromptGenerator.generate_prompts(IMAGES_PER_GENERATOR)
 
     print("=" * 60)
     print("AI Image Detector - Data Collection")

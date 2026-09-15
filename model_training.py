@@ -27,7 +27,7 @@ class DataLoader:
 
     def __init__(self, data_dir: str = "data/processed"):
         self.data_dir = data_dir
-        self.generators = ["dalle3", "stable_diffusion", "ideogram"]
+        self.generators = ["sdxl", "flux", "sd15"]
         self.real_label = "coco"
 
     def load_features(self) -> Tuple[np.ndarray, np.ndarray, List[str]]:
@@ -77,7 +77,7 @@ class CrossGeneratorValidator:
             test_idx = []
 
             for i, name in enumerate(image_names):
-                if name == test_gen or name == self.data_loader.real_label:
+                if name == test_gen:
                     test_idx.append(i)
                 else:
                     train_idx.append(i)
@@ -94,9 +94,9 @@ class CrossGeneratorValidator:
                      fold: Dict, model_type: str = "ensemble") -> Dict:
         """Evaluate single fold."""
 
-        X_train = features[fold["train_idx"]]
+        X_train = features[fold["train_idx"].astype(int)]
         y_train = labels[fold["train_idx"]]
-        X_test = features[fold["test_idx"]]
+        X_test = features[fold["test_idx"].astype(int)]
         y_test = labels[fold["test_idx"]]
 
         scaler = StandardScaler()
