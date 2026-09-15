@@ -253,7 +253,7 @@ class StableDiffusionXLGenerator:
     """Generate images using Stable Diffusion XL locally (FREE!)."""
 
     def __init__(self, device: str = None):
-        self.device = device or os.getenv("DEVICE", "mps")
+        self.device = device or os.getenv("DEVICE", "cuda")
         print(f"[*] Loading SDXL model on {self.device}...")
 
         try:
