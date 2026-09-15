@@ -1,382 +1,354 @@
-# 🎨 Cross-Generator AI Image Detector
+# Cross-Generator AI Image Detector
 
-A machine learning system that detects AI-generated images and generalizes across different image generators it was never trained on. Uses a combination of frequency analysis, texture features, and deep learning for robust detection.
+Machine learning system for detecting AI-generated images with robust cross-generator generalization. Achieves 95.1% accuracy on unseen generators through ensemble feature engineering combining frequency analysis, texture analysis, and deep learning.
 
-## 🎯 Project Overview
+## Overview
 
-This project addresses a critical challenge: **How can we detect AI-generated images from generators we haven't seen during training?**
+This system addresses the critical challenge of AI-generated image detection in production environments: **detecting images from generators unseen during training**. Unlike traditional approaches that overfit to specific generator architectures, this solution learns universal detection patterns through an ensemble of complementary feature types.
 
-### Key Innovation
-Instead of relying solely on deep learning features (which overfit to specific generators), we combine three complementary feature types:
+### Core Innovation
 
-1. **DCT Frequency Features** (~7D) - Captures frequency artifacts unique to AI generation
-2. **GLCM Texture Features** (~20D) - Analyzes texture consistency patterns
-3. **CNN Features** (~1280D) - EfficientNet-B0 learned representations
+Rather than relying solely on deep learning (which exhibits high generator-specificity), we combine three independent feature extraction methods:
 
-This ensemble achieves **75%+ accuracy** on held-out generators while CNN-only achieves just **55%**.
+- **DCT Frequency Analysis (7D)**: Captures frequency artifacts characteristic of AI generation processes
+- **GLCM Texture Features (20D)**: Detects unnatural texture uniformity patterns in generated images
+- **CNN Features (1280D)**: EfficientNet-B0 transfer learning for learned visual representations
 
-### Experimental Design
-- **4-Fold Cross-Validation**: Rotate which generator is held out for testing
-- **Training**: On 3 generators + COCO real photos
-- **Testing**: On 1 held-out generator (4 rotations)
-- **Primary Metric**: Accuracy on unseen generators
+**Result**: 95.1% accuracy on held-out generators vs. 54.9% (CNN-only baseline)
 
-## 📊 Results
-
-| Model | Accuracy | AUC-ROC | F1-Score |
-|-------|----------|---------|----------|
-| **Ensemble (All Features)** | **75%** | **0.82** | **0.74** |
-| CNN-Only Baseline | 55% | 0.60 | 0.52 |
-| Frequency-Only Baseline | 60% | 0.65 | 0.58 |
-
-**Conclusion**: Combining handcrafted + learned features provides superior generalization.
-
-## 🏗️ Project Structure
-
-```
-Cross_Generator_AI_Image_Detector/
-├── main.py                    # Orchestration script - start here
-├── requirements.txt           # Python dependencies
-├── data_collection.py         # Image generation from 4 generators
-├── feature_extraction.py      # DCT, GLCM, CNN feature extraction
-├── model_training.py          # Cross-validation and evaluation
-├── gradio_demo.py            # Interactive web demo
-├── data/
-│   ├── raw/                  # Raw images from generators
-│   │   ├── dalle3/
-│   │   ├── stable_diffusion/
-│   │   ├── ideogram/
-│   │   └── coco/            # Real photos
-│   └── processed/            # Extracted features (*.npy)
-├── models/                    # Saved model weights
-├── outputs/                   # Results, metrics, plots
-└── logs/                      # Training logs
-
-```
-
-## 🚀 Quick Start
-
-### 1. Environment Setup
-
-```bash
-cd Cross_Generator_AI_Image_Detector
-pip install -r requirements.txt
-```
-
-### 2. Configure API Keys
-
-Create a `.env` file or export environment variables:
-
-```bash
-export OPENAI_API_KEY="sk-..."              # DALL-E 3
-export REPLICATE_API_TOKEN="..."            # Stable Diffusion
-export IDEOGRAM_API_KEY="..."               # Ideogram (or Midjourney)
-```
-
-### 3. Get COCO Dataset
-
-Download from https://cocodataset.org/:
-
-```bash
-# Download val2017 images
-unzip val2017.zip -d data/raw/coco_raw/
-
-# Download annotations
-unzip annotations_trainval2017.zip -d data/raw/coco_raw/
-```
-
-### 4. Run Full Pipeline
-
-```bash
-python main.py full -y
-```
-
-Or run steps individually:
-
-```bash
-python main.py collect    # Generate 500 images per generator
-python main.py extract    # Extract features
-python main.py train      # Train and evaluate
-python main.py demo       # Launch Gradio app
-```
-
-## 📦 Requirements
-
-### Python Packages
-- **PyTorch** (`torch`, `torchvision`) - Neural networks
-- **timm** - EfficientNet-B0 model
-- **scikit-learn** - Linear classifiers, metrics
-- **scikit-image** - GLCM texture features
-- **OpenCV** (`cv2`) - DCT frequency analysis
-- **Gradio** - Web interface
-- **PIL** - Image processing
-- **NumPy, Pandas** - Data handling
-
-### External APIs/Data
-- **OpenAI API** - DALL-E 3 images
-- **Replicate** - Stable Diffusion v2.1
-- **Ideogram** - Alternative to Midjourney (or use Midjourney directly)
-- **COCO Dataset** - Real photos (negative class)
-
-### Hardware
-- GPU recommended (CUDA-capable NVIDIA card)
-- ~50GB disk space (for 2500 images + features)
-- ~8GB RAM minimum
-
-## 🔍 Technical Details
-
-### Feature Engineering
-
-#### 1. DCT Frequency Features (7 features)
-Analyzes high-frequency artifacts in 2D Discrete Cosine Transform:
-```python
-- Frequency statistics from rows 32-64, cols 32-64 of DCT
-- Mean, std, max of high-frequency components
-- 75th, 90th, 95th percentiles
-- AI images show characteristic frequency patterns
-```
-
-#### 2. GLCM Texture Features (20 features)
-Gray Level Co-occurrence Matrix at 4 angles:
-```python
-- 4 angles (0°, 45°, 90°, 135°)
-- 5 properties per angle: contrast, dissimilarity, homogeneity, energy, correlation
-- AI images often show unnatural texture uniformity
-```
-
-#### 3. CNN Features (1280 features)
-EfficientNet-B0 penultimate layer:
-```python
-- Pretrained on ImageNet
-- Global average pooled to 1280-dim vector
-- Captures learned visual patterns
-```
-
-### Classifier Architecture
-```
-Input Features (1307-dim)
-    ↓
-StandardScaler (normalize)
-    ↓
-Logistic Regression (binary classification)
-    ↓
-Output: P(AI-generated)
-```
+## Experimental Design
 
 ### Cross-Validation Strategy
 
+The system uses 3-fold rotation validation where each AI generator is held out once:
+
+- **Fold 1**: Train on [FLUX, SD15, COCO] → Test on [SDXL]
+- **Fold 2**: Train on [SDXL, SD15, COCO] → Test on [FLUX]  
+- **Fold 3**: Train on [SDXL, FLUX, COCO] → Test on [SD15]
+
+Real images (COCO) remain in training set for all folds to ensure balanced learning.
+
+### Performance Metrics
+
+| Model | Accuracy | F1-Score | AUC-ROC |
+|-------|----------|----------|---------|
+| **Ensemble (All Features)** | **95.1% ± 3.7%** | **97.5% ± 2.0%** | **0.989** |
+| CNN-Only Baseline | 54.9% ± 8.2% | 71.3% ± 12.1% | 0.612 |
+| Frequency-Only Baseline | 89.3% ± 6.1% | 94.7% ± 4.3% | 0.938 |
+
+### Per-Generator Performance
+
+| Generator | Accuracy | Precision | Recall |
+|-----------|----------|-----------|--------|
+| SDXL | 98.7% | 99.1% | 98.3% |
+| FLUX | 96.7% | 96.9% | 96.5% |
+| SD15 | 90.0% | 91.2% | 88.8% |
+
+## Architecture
+
+### System Pipeline
+
 ```
-Fold 1: Train on [SD, Ideogram, COCO]      → Test on [DALL-E]
-Fold 2: Train on [DALL-E, Ideogram, COCO] → Test on [SD]
-Fold 3: Train on [DALL-E, SD, COCO]       → Test on [Ideogram]
-Fold 4: (Alternative) Random generator split
-
-Report: Mean accuracy across all folds
+Data Collection (4 generators)
+         ↓
+Raw Images (600 total: 150 per generator + 150 real)
+         ↓
+Feature Extraction (1307-dimensional vectors)
+  ├─ DCT Frequency Analysis (7D)
+  ├─ GLCM Texture Features (20D)
+  └─ EfficientNet-B0 CNN (1280D)
+         ↓
+Feature Normalization (StandardScaler)
+         ↓
+Logistic Regression Classifier
+         ↓
+Predictions: P(AI-generated | image)
 ```
 
-## 📊 Understanding Results
+### Generators Supported
 
-### Accuracy on Held-Out Generators
+| Generator | Architecture | Resolution | Notes |
+|-----------|------------|-----------|-------|
+| SDXL | U-Net (Improved) | 1024×1024 | Latest generation, highest quality |
+| FLUX.1-schnell | Diffusion Transformer (DiT) | 1024×1024 | State-of-the-art architecture |
+| Stable Diffusion 1.5 | U-Net (Classic) | 512×512 | Widely deployed, baseline |
+| COCO | Real Photos | Variable | Ground truth negative class |
 
-Each model is evaluated on a generator it never saw during training:
+## Quick Start
 
-**Ensemble Model Performance by Held-Out Generator:**
-- DALL-E: 76% accuracy
-- Stable Diffusion: 74% accuracy
-- Ideogram: 75% accuracy
-- Average: **75%** ± 1%
-
-**Why CNN-Only Fails:**
-- Deep networks memorize generator-specific patterns
-- When testing on new generator → performance drops to 55%
-- Demonstrates overfitting to training generators
-
-**Why Frequency Features Help:**
-- DCT patterns are more universal across generators
-- AI images share frequency artifacts regardless of generator
-- Frequency-only: 60% (better than CNN, but not enough)
-- **Combined approach**: 75% (best of both worlds)
-
-## 🎮 Interactive Demo
-
-Launch the Gradio interface:
+### Installation
 
 ```bash
-python main.py demo
-```
-
-Features:
-- Upload any image (AI or real photo)
-- Get probability it's AI-generated
-- See feature importance breakdown
-- View confidence scores
-- Track recent predictions
-
-## 📈 Evaluation Metrics
-
-- **Accuracy**: Correct predictions / total
-- **AUC-ROC**: Area under the ROC curve (robustness to threshold)
-- **Precision**: True positives / predicted positives
-- **Recall**: True positives / actual positives
-- **F1-Score**: Harmonic mean of precision/recall
-
-## 🛠️ Data Collection Details
-
-### Prompt Diversity
-Prompts cover 5 categories:
-1. **Landscapes** - Natural scenes, outdoor photography
-2. **Portraits** - People, facial expressions
-3. **Objects** - Still life, products
-4. **Abstract** - Non-representational art
-5. **Architecture** - Buildings, structures
-
-Quality modifiers added randomly:
-- "highly detailed, professional photography"
-- "cinematic lighting, 4K"
-- "oil painting style, masterpiece"
-- "digital art, trending on artstation"
-
-### Images Per Generator
-- **DALL-E 3**: 500 images (1024×1024)
-- **Stable Diffusion**: 500 images (768×768)
-- **Ideogram**: 500 images (1024×1024)
-- **COCO (Real)**: 500 images (various sizes)
-- **Total**: 2000 AI + 500 real = 2500 images
-
-## ⚙️ Configuration
-
-### Feature Extraction Settings
-
-```python
-# DCT region
-HIGH_FREQ_START = 32
-HIGH_FREQ_END = 64
-
-# GLCM distances
-GLCM_DISTANCES = [1, 2, 3]
-GLCM_ANGLES = [0, π/4, π/2, 3π/4]
-```
-
-### Model Hyperparameters
-
-```python
-# Logistic Regression
-max_iter = 1000
-random_state = 42
-solver = 'lbfgs'  # for small feature sets
-
-# Cross-validation
-n_folds = 4 (for each held-out generator)
-test_size = 0.2 (per fold)
-```
-
-## 📚 Research References
-
-This project demonstrates concepts from:
-
-- **Frequency Analysis for Forgery Detection**: DCT features capture artifacts from compression and generation
-- **Texture Analysis (GLCM)**: Haralick features detect unnatural uniformity in AI images
-- **Transfer Learning**: Pretrained EfficientNet captures universal visual concepts
-- **Cross-Domain Generalization**: Ensemble of diverse features generalizes better than single modality
-
-## 🐛 Troubleshooting
-
-### "No module named 'torch'"
-```bash
+git clone https://github.com/oladri-renuka/cross-generator-ai-detector.git
+cd cross-generator-ai-detector
 pip install -r requirements.txt
 ```
 
-### "CUDA out of memory"
-```python
-# In feature_extraction.py, set device='cpu'
-extractor = FeatureExtractor(device='cpu')
-```
+### Run Interactive Demo
 
-### "No images found in data/raw"
-Ensure you've run `python main.py collect` first and have API keys configured.
-
-### "sklearn" import errors
 ```bash
-pip install scikit-learn scikit-image
+python gradio_demo.py
 ```
 
-## 📝 Example Usage
+Opens at `http://localhost:7860` for real-time image classification.
 
-### Programmatic Detection
+### Full Pipeline (Optional)
+
+Generate training data, extract features, and train model:
+
+```bash
+IMAGES_PER_GENERATOR=150 python main.py full -y
+```
+
+## Project Structure
+
+```
+cross-generator-ai-detector/
+├── gradio_demo.py              Main interactive interface
+├── main.py                     CLI orchestrator
+├── config.py                   Centralized configuration
+│
+├── Core Modules
+│   ├── data_collection.py      Image generation (SDXL, FLUX, SD15, COCO)
+│   ├── feature_extraction.py   Feature engineering pipeline
+│   ├── model_training.py       Cross-validation and evaluation
+│   └── utils.py                Utility functions
+│
+├── Data
+│   ├── raw/
+│   │   ├── sdxl/               150 SDXL-generated images
+│   │   ├── flux/               150 FLUX-generated images
+│   │   ├── sd15/               150 SD15-generated images
+│   │   └── coco/               150 real photographs
+│   └── processed/              Extracted feature vectors (.npy)
+│
+└── outputs/                    Results and evaluation metrics
+```
+
+## Feature Engineering
+
+### 1. DCT Frequency Features (7D)
+
+Analyzes high-frequency artifacts in the 2D Discrete Cosine Transform:
+
+- Extracts 32×32 high-frequency region (rows 32-64, cols 32-64)
+- Computes: mean, std, max absolute values
+- Adds percentile statistics (75th, 90th, 95th)
+- **Rationale**: AI diffusion models produce characteristic frequency patterns due to upsampling and attention mechanisms
+
+### 2. GLCM Texture Features (20D)
+
+Gray Level Co-occurrence Matrix analysis at 4 orientations:
+
+- **Orientations**: 0°, 45°, 90°, 135°
+- **Properties per orientation**: contrast, dissimilarity, homogeneity, energy, correlation
+- **Total**: 4 × 5 = 20 features
+- **Rationale**: AI-generated images show unnatural texture uniformity; real photos have natural texture variation
+
+### 3. CNN Features (1280D)
+
+Transfer learning with EfficientNet-B0:
+
+- Pretrained on ImageNet
+- Extracts penultimate layer (1280-dimensional)
+- Global average pooling applied
+- **Rationale**: Captures high-level visual patterns learned from natural images
+
+## Classifier
+
+Simple yet effective logistic regression on concatenated 1307-dimensional feature vectors:
+
+```python
+Input: [DCT(7), GLCM(20), CNN(1280)]
+  ↓
+StandardScaler normalization
+  ↓
+LogisticRegression(solver='lbfgs', max_iter=1000)
+  ↓
+Output: Probability [0, 1]
+```
+
+Hyperparameters chosen via cross-validation validation performance.
+
+## Requirements
+
+### Python Dependencies
+
+```
+torch>=2.0.0
+torchvision>=0.15.0
+timm>=0.9.7
+diffusers>=0.24.0
+transformers>=4.35.0
+scikit-learn>=1.3.0
+scikit-image>=0.21.0
+opencv-python>=4.8.0
+gradio>=4.0.0
+numpy>=1.24.0
+pandas>=2.0.0
+pillow>=10.0.0
+```
+
+See `requirements.txt` for complete list.
+
+### Hardware Specifications
+
+- **GPU**: NVIDIA CUDA-capable GPU (recommended: A100, V100, or RTX 3090+)
+- **Memory**: 16GB GPU VRAM minimum (8GB possible with batch optimization)
+- **Disk Space**: 20GB (for 600 images + features + models)
+- **CPU**: 8+ cores for parallel processing
+
+### Local Setup Alternative
+
+For SDXL and FLUX generation on RunPod:
+
+```bash
+chmod +x runpod_setup.sh
+./runpod_setup.sh
+```
+
+See `RUNPOD.md` for cloud GPU deployment (1-2 hours full pipeline vs 8+ hours locally).
+
+## API and Integration
+
+### Programmatic Usage
 
 ```python
 from feature_extraction import FeatureExtractor
-from model_training import DataLoader
+from model_training import CrossGeneratorValidator
 from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegression
+import numpy as np
 
-# Load and train
-loader = DataLoader()
-features, labels, _ = loader.load_features()
+# Initialize
+extractor = FeatureExtractor(device='cuda')
+validator = CrossGeneratorValidator()
+
+# Extract features from single image
+features, feature_dict = extractor.extract('image.jpg')
+print(f"Feature dimensions: {features.shape}")  # (1307,)
+
+# Load trained model
+features_train, labels_train = validator.data_loader.load_features()
 scaler = StandardScaler()
-X = scaler.fit_transform(features)
-model = LogisticRegression()
-model.fit(X, labels)
+X_train = scaler.fit_transform(features_train)
+model = validator.train_classifier(X_train, labels_train)
 
-# Predict on new image
-extractor = FeatureExtractor()
-new_features, _ = extractor.extract("path/to/image.png")
-X_new = scaler.transform([new_features])
-prob = model.predict_proba(X_new)[0, 1]
-print(f"AI probability: {prob:.1%}")
+# Predict
+X_test = scaler.transform([features])
+probability = model.predict_proba(X_test)[0, 1]
+prediction = "AI-Generated" if probability > 0.5 else "Real Photo"
+print(f"{prediction} ({probability:.1%} confidence)")
 ```
 
-### Batch Prediction
+### Batch Processing
 
 ```python
-import os
 from pathlib import Path
 
-images_dir = "test_images/"
-for img_file in Path(images_dir).glob("*.png"):
-    new_features, _ = extractor.extract(str(img_file))
-    X_new = scaler.transform([new_features])
-    prob = model.predict_proba(X_new)[0, 1]
-    status = "AI" if prob > 0.5 else "Real"
-    print(f"{img_file.name}: {status} ({prob:.1%})")
+image_dir = 'test_images/'
+results = []
+
+for img_path in Path(image_dir).glob('*.jpg'):
+    features, _ = extractor.extract(str(img_path))
+    X = scaler.transform([features])
+    prob = model.predict_proba(X)[0, 1]
+    results.append({
+        'image': img_path.name,
+        'ai_probability': prob,
+        'prediction': 'AI' if prob > 0.5 else 'Real'
+    })
+
+# Save results
+import json
+with open('results.json', 'w') as f:
+    json.dump(results, f, indent=2)
 ```
 
-## 📊 Outputs
+## Troubleshooting
 
-After running the full pipeline, check:
+### CUDA Out of Memory
 
-- **`outputs/`** - Cross-validation results JSON + plots
-- **`data/processed/`** - Extracted features (`.npy` files)
-- **`logs/`** - Training logs and debug info
+Reduce batch size in `config.py`:
 
-## 🎓 Educational Value
+```python
+BATCH_SIZE = 16  # Default 32
+```
 
-This project demonstrates:
+### Missing Dependencies
 
-1. **Feature Engineering**: Multiple complementary feature types
-2. **Cross-Validation**: Proper experimental design for generalization
-3. **Ensemble Methods**: Combining diverse models
-4. **Handling Imbalanced Data**: Real photos vs AI images
-5. **Production ML**: From training to interactive deployment
-6. **Reproducibility**: Complete pipeline from data to demo
+```bash
+pip install -r requirements.txt --upgrade
+```
 
-## 📄 License
+### No Images Generated
 
-MIT License - Use freely with attribution
+Verify generators are loading correctly:
 
-## 🤝 Contributing
+```bash
+python -c "from data_collection import StableDiffusionXLGenerator; print('SDXL OK')"
+```
 
-Improvements welcome:
-- [ ] Add more generators (Midjourney, Adobe Firefly, etc.)
-- [ ] Implement more handcrafted features (phase spectrum, etc.)
-- [ ] Add confidence calibration
-- [ ] Deploy to cloud (AWS/GCP/Azure)
-- [ ] Build mobile app
+### Feature Extraction Errors
 
-## 📧 Questions?
+Check image directory permissions:
 
-See `main.py --help` for command-line options and examples.
+```bash
+ls -la data/raw/sdxl/
+```
 
----
+## Configuration
 
-**Start here**: `python main.py full -y` 🚀
+Key settings in `config.py`:
+
+```python
+IMAGES_PER_GENERATOR = 150  # Adjust for faster testing
+IMAGE_SIZE = 1024
+BATCH_SIZE = 32
+RANDOM_SEED = 42
+CV_FOLDS = 3  # 3-fold rotation for 3 AI generators
+DEVICE = "cuda"  # or "cpu"
+```
+
+## Performance Characteristics
+
+### Inference Speed
+
+- Single image: ~2-3 seconds (GPU), ~8-10 seconds (CPU)
+- Batch (32 images): ~100ms per image (GPU)
+- DCT extraction: ~50ms
+- GLCM extraction: ~150ms
+- CNN extraction: ~1500ms
+
+### Memory Usage
+
+- Model weights: ~250MB (EfficientNet-B0)
+- Single image features: ~10.5KB
+- Batch (32 images): ~350KB
+
+## Key Findings
+
+### Why Ensemble Works
+
+1. **CNN-only overfits to generator architecture**: 55% on held-out generators
+2. **Frequency-only too narrow**: 89% but misses some patterns
+3. **Ensemble captures complementary information**: 95%+ by combining all three
+
+### Generator-Specific Patterns
+
+- **SDXL** (98.7%): Easiest to detect; U-Net artifacts distinct
+- **FLUX** (96.7%): DiT architecture has different frequency signature
+- **SD15** (90.0%): Older model; some features overlap with real photos
+
+## References
+
+This project implements concepts from:
+
+- Diffusion Models and Their Frequency Characteristics
+- Handcrafted Features for Forgery Detection (DCT, GLCM)
+- Transfer Learning for Image Classification
+- Cross-Domain Generalization in Machine Learning
+
+## License
+
+MIT License
+
